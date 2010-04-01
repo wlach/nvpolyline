@@ -1,0 +1,13 @@
+This is an example project demonstrating how to draw a polyline inside an
+MKMapView that continues to display correctly even as a user pinches and zooms
+the map. It incorporates and expands upon ideas from Craig Spitzkoff and
+Nicolas Neubauer.
+
+For more information, see:
+
+http://navarra.ca/
+
+For information on the inspiration behind this original work, see:
+
+http://spitzkoff.com/craig/?p=65
+http://pixelfehler.nicolas-neubauer.de/2009/09/04/mapkit-google-maps-iphone-and-drawing-routes-or-polylines/

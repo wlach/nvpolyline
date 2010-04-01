@@ -1,0 +1,5 @@
+.DS_Store
+build
+nvpolyline.xcodeproj/*.mode1v3
+nvpolyline.xcodeproj/*.pbxuser
+nvpolyline.xcodeproj/*.perspectivev3
