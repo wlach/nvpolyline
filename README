@@ -3,6 +3,9 @@ MKMapView that continues to display correctly even as a user pinches and zooms
 the map. It incorporates and expands upon ideas from Craig Spitzkoff and
 Nicolas Neubauer.
 
+This solution is focused on iPhone OS versions < 4.0
+In iPhone OS 4 the MKPolyline has been added. However this does not exist in earlier versions.
+
 For more information, see:
 
 http://navarra.ca/?p=786
@@ -11,3 +14,9 @@ For information on the inspiration behind this original work, see:
 
 http://spitzkoff.com/craig/?p=65
 http://pixelfehler.nicolas-neubauer.de/2009/09/04/mapkit-google-maps-iphone-and-drawing-routes-or-polylines/
+
+The original example from http://github.com/wlach contained some bugs, which did not seem to get fixed. Bugs fixed:
+- Polyline View overlaps other Annotation Views (http://github.com/wlach/nvpolyline/issues#issue/2)
+- App crashes when zoomed in (http://github.com/wlach/nvpolyline/issues#issue/1)
+
+

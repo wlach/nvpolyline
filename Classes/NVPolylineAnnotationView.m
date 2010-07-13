@@ -5,6 +5,7 @@
 //  Created by William Lachance on 10-03-31.
 //  Inspired by code and ideas from Craig Spitzkoff and Nicolas Neubauer 2009.
 //
+//  Further development by Joerg Polakowski (www.mobile-melting.de)
 
 #import "NVPolylineAnnotationView.h"
 
@@ -39,10 +40,9 @@ const CGFloat POLYLINE_WIDTH = 4.0;
 }
 
 -(void) drawRect:(CGRect)rect {
-
+	
 	NVPolylineAnnotation* annotation = (NVPolylineAnnotation*)_polylineView.annotation;
-	if (annotation.points && annotation.points.count > 0)
-	{
+	if (!self.hidden && annotation.points && annotation.points.count > 0) {
 		CGContextRef context = UIGraphicsGetCurrentContext(); 
 		
 		CGContextSetStrokeColorWithColor(context, [UIColor blueColor].CGColor);
@@ -55,15 +55,91 @@ const CGFloat POLYLINE_WIDTH = 4.0;
 			CLLocation* location = [annotation.points objectAtIndex:i];
 			CGPoint point = [_mapView convertCoordinate:location.coordinate toPointToView:self];
 			
-			if (i == 0)
-				CGContextMoveToPoint(context, point.x, point.y);
-			else
-				CGContextAddLineToPoint(context, point.x, point.y);
-		}
-		
+			BOOL contains = CGRectContainsPoint(rect, point);
+			if (contains) {
+				CGPoint prevPoint = CGPointZero;
+				@try {
+					CLLocation *prevLocation = [annotation.points objectAtIndex:(i - 1)];
+					prevPoint = [_mapView convertCoordinate:prevLocation.coordinate 
+											  toPointToView:self];					
+					if (!CGRectContainsPoint(rect, prevPoint)) { // outside
+						CGContextMoveToPoint(context, prevPoint.x, prevPoint.y);
+					}
+				}
+				@catch(NSException *ex) { 
+					prevPoint = CGPointZero;
+				}
+				
+				if (!CGPointEqualToPoint(prevPoint, CGPointZero)) { // prevPoint outside
+					CGContextAddLineToPoint(context, point.x, point.y);
+				}
+				else { // prevPoint inside
+					CGContextMoveToPoint(context, point.x, point.y);
+				}
+				
+				CGPoint nextPoint = CGPointZero;
+				@try {
+					CLLocation *nextLocation = [annotation.points objectAtIndex:(i + 1)];
+					nextPoint = [_mapView convertCoordinate:nextLocation.coordinate 
+											  toPointToView:self];					
+					if (!CGRectContainsPoint(rect, nextPoint)) { // outside
+						CGContextAddLineToPoint(context, nextPoint.x, nextPoint.y);
+					}
+					else {
+						nextPoint = CGPointZero;
+					}
+				}
+				@catch(NSException *ex) { 
+					nextPoint = CGPointZero;
+				}
+			}
+			else {
+				// if current point is outside the drawing rect, check if the line drawn
+				// between current point and next point intersects with the drawing rect				
+				CGPoint nextPoint = CGPointZero;
+				@try {
+					CLLocation *nextLocation = [annotation.points objectAtIndex:(i + 1)];
+					nextPoint = [_mapView convertCoordinate:nextLocation.coordinate 
+											  toPointToView:self];					
+					if (!CGRectContainsPoint(rect, nextPoint)) { // outside, check intersection
+						CGMutablePathRef myPath = CGPathCreateMutable();
+						CGPathMoveToPoint(myPath, NULL, point.x, point.y );
+						CGPathAddLineToPoint(myPath, NULL, nextPoint.x, nextPoint.y);
+						CGPathCloseSubpath(myPath);
+						
+						CGRect lineRect = CGPathGetBoundingBox(myPath);
+						
+						if (CGRectIntersectsRect(rect, lineRect)) {
+							CGContextMoveToPoint(context, point.x, point.y);
+							CGContextAddLineToPoint(context, nextPoint.x, nextPoint.y);
+						}
+						CGPathRelease(myPath);
+					}
+				}
+				@catch(NSException *ex) { 
+					nextPoint = CGPointZero;
+				}				
+			}
+		}		
 		CGContextStrokePath(context);
 	}
 }
+
+- (BOOL) lineIntersectsRect:(CGRect)rect from:(CGPoint)a to:(CGPoint)b {
+	float lineSlope = (b.y - a.y) / (b.x - a.x);
+	float yIntercept = a.y - lineSlope * a.x;
+	float leftY = lineSlope * CGRectGetMinX(rect) + yIntercept;
+	float rightY = lineSlope * CGRectGetMaxX(rect) + yIntercept;
+	
+	if (leftY >= CGRectGetMinY(rect) && leftY <= CGRectGetMaxY(rect)) {
+		return YES;
+	}
+	if (rightY >= CGRectGetMinY(rect) && rightY <= CGRectGetMaxY(rect)) {
+		return YES;
+	}
+	return NO;
+}
+
 
 -(void) dealloc {
 	[super dealloc];
@@ -86,7 +162,7 @@ const CGFloat POLYLINE_WIDTH = 4.0;
 		self.backgroundColor = [UIColor clearColor];
 		self.clipsToBounds = NO;
 		self.frame = CGRectMake(0.0, 0.0, _mapView.frame.size.width, _mapView.frame.size.height);
-
+		
 		_internalView = [[[NVPolylineInternalAnnotationView alloc] initWithPolylineView:self mapView:_mapView] autorelease];
 		[self addSubview:_internalView];
     }
@@ -95,32 +171,11 @@ const CGFloat POLYLINE_WIDTH = 4.0;
 
 -(void) regionChanged {
 	// move the internal route view. 
-	
-	NVPolylineAnnotation* annotation = (NVPolylineAnnotation*)self.annotation;
-	CGPoint minpt, maxpt;
-	for (int i = 0; i < annotation.points.count; i++)
-	{
-		CLLocation* location = [annotation.points objectAtIndex:i];
-		CGPoint point = [_mapView convertCoordinate:location.coordinate toPointToView:_mapView];	
-		if (point.x < minpt.x || i == 0)
-			minpt.x = point.x;
-		if (point.y < minpt.y || i == 0)
-			minpt.y = point.y;
-		if (point.x > maxpt.x || i == 0)
-			maxpt.x = point.x;
-		if (point.y > maxpt.y || i == 0)
-			maxpt.y = point.y;
-	}
-	
-	CGFloat w = maxpt.x - minpt.x + (2*POLYLINE_WIDTH);
-	CGFloat h = maxpt.y - minpt.y + (2*POLYLINE_WIDTH);
-	
-	_internalView.frame = CGRectMake(minpt.x - POLYLINE_WIDTH, minpt.y - POLYLINE_WIDTH, 
-									 w, h);
+	_internalView.frame = _mapView.frame;
 	[_internalView setNeedsDisplay];
 }
 
-- (CGPoint) centerOffset {
+- (CGPoint) centerOffset {	
 	// HACK: use the method to get the centerOffset (called by the main mapview)
 	// to reposition our annotation subview in response to zoom and motion 
 	// events

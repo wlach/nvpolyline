@@ -122,4 +122,17 @@
     [super dealloc];
 }
 
+# pragma mark - MKMapViewDelegate
+
+- (void) mapView:(MKMapView *)mapView didAddAnnotationViews:(NSArray *)views {
+	// fixes that some marker are behind the polyline
+	for (int i=0; i<[views count]; i++) {
+		MKAnnotationView *view = [views objectAtIndex:i];
+		if ([view isKindOfClass:[NVPolylineAnnotationView class]]) {
+			[[view superview] sendSubviewToBack:view];
+		}
+	}
+}
+
+
 @end
