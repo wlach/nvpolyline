@@ -8,6 +8,7 @@
 //  Further development by Joerg Polakowski (www.mobile-melting.de)
 
 #import "NVPolylineAnnotationView.h"
+#import <QuartzCore/QuartzCore.h>
 
 const CGFloat POLYLINE_WIDTH = 4.0;
 
@@ -36,6 +37,12 @@ const CGFloat POLYLINE_WIDTH = 4.0;
 		self.clipsToBounds = NO;
 	}
 	
+	// for debugging only to check when and how the polyline annotation view is updated
+	/*
+	CALayer *infoLayer = [self layer];
+	[infoLayer setBorderWidth:2];
+	[infoLayer setBorderColor:[[UIColor greenColor] CGColor]];
+	*/
 	return self;
 }
 
@@ -171,7 +178,20 @@ const CGFloat POLYLINE_WIDTH = 4.0;
 
 -(void) regionChanged {
 	// move the internal route view. 
-	_internalView.frame = _mapView.frame;
+	
+	/* In iOS version 4.0 and above we need to calculate the new frame. Before iOS 4 setting
+	 the view's frame to the mapview's frame was sufficient*/
+	NSString *reqSysVer = @"4.0";
+	NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+	if ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending) {
+		CGPoint origin = CGPointMake(0, 0);
+		origin = [_mapView convertPoint:origin toView:self];	
+		_internalView.frame = CGRectMake(origin.x, origin.y, _mapView.frame.size.width, _mapView.frame.size.height);
+	}
+	else { // iOS < 4.0
+		_internalView.frame = _mapView.frame;
+	}
+	
 	[_internalView setNeedsDisplay];
 }
 

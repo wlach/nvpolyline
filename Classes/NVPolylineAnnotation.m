@@ -11,7 +11,7 @@
 
 @implementation NVPolylineAnnotation
 
-@synthesize points = _points; 
+@synthesize points = _points;
 
 -(id) initWithPoints:(NSArray*) points mapView:(MKMapView *)mapView {
 	self = [super init];

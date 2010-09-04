@@ -13,11 +13,10 @@
 @interface NVPolylineAnnotation : NSObject<MKAnnotation> {
 	NSMutableArray* _points; 
 	MKMapView* _mapView;
-
 }
 
--(id) initWithPoints:(NSArray*) points mapView:(MKMapView *)mapView;
-
 @property (nonatomic, retain) NSArray* points;
+
+-(id) initWithPoints:(NSArray*) points mapView:(MKMapView *)mapView;
 
 @end
