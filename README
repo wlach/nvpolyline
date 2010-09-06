@@ -3,8 +3,10 @@ MKMapView that continues to display correctly even as a user pinches and zooms
 the map. It incorporates and expands upon ideas from Craig Spitzkoff and
 Nicolas Neubauer.
 
-This solution is focused on iPhone OS versions < 4.0
-In iPhone OS 4 the MKPolyline has been added. However this does not exist in earlier versions.
+This solution is focused on iPhone OS versions pro to 4.x
+Note: In iPhone OS 4.0 the MKPolyline has been added.
+
+However, if you want to create an application, which should run on iOS versions prior to 4.x and make use of a polyline, you should use this project's polyline implementation.
 
 For more information, see:
 
