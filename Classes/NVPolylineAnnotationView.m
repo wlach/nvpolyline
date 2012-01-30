@@ -98,6 +98,10 @@ const CGFloat POLYLINE_WIDTH = 4.0;
 	
 	NVPolylineAnnotation* annotation = (NVPolylineAnnotation*)self.annotation;
 	CGPoint minpt, maxpt;
+	minpt.x = CGFLOAT_MIN;
+	minpt.y = CGFLOAT_MIN;
+	maxpt.x = CGFLOAT_MAX;
+	maxpt.y = CGFLOAT_MAX;
 	for (int i = 0; i < annotation.points.count; i++)
 	{
 		CLLocation* location = [annotation.points objectAtIndex:i];
