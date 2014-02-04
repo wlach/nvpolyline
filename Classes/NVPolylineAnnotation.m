@@ -11,12 +11,12 @@
 
 @implementation NVPolylineAnnotation
 
-@synthesize points = _points; 
+@synthesize points = _points;
 
 -(id) initWithPoints:(NSArray*) points mapView:(MKMapView *)mapView {
 	self = [super init];
 	
-	_points = [[NSArray alloc] initWithArray:points];
+	_points = [points mutableCopy];
 	_mapView = [mapView retain];
 		
 	return self;

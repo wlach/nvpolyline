@@ -20,5 +20,6 @@
 
 - (id)initWithAnnotation:(NVPolylineAnnotation *)annotation
 				 mapView:(MKMapView *)mapView;
+- (void) regionChanged;
 
 @end

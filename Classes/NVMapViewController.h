@@ -13,4 +13,6 @@
 	MKMapView *_mapView;
 }
 
+- (void)updatePolylineAnnotationView;
+
 @end

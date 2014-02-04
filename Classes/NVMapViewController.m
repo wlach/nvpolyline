@@ -8,7 +8,7 @@
 
 #import "NVMapViewController.h"
 #import "NVPolylineAnnotationView.h"
-
+#import <QuartzCore/QuartzCore.h>
 
 @implementation NVMapViewController
 
@@ -98,7 +98,7 @@
 					   nil];
 					   
 	NVPolylineAnnotation *annotation = [[[NVPolylineAnnotation alloc] initWithPoints:points mapView:_mapView] autorelease];
-	[_mapView addAnnotation:annotation];
+	[_mapView addAnnotation:annotation];	
 	
 	// use some magic numbers to create a map region
 	MKCoordinateRegion region;
@@ -118,8 +118,54 @@
 	return nil;
 }
 
+// Find any polyline annotation and update its region.
+- (void)updatePolylineAnnotationView {
+	for (NSObject *a in [_mapView annotations]) {
+		if ([a isKindOfClass:[NVPolylineAnnotation class]]) {
+			NVPolylineAnnotation *polyline = (NVPolylineAnnotation *)a;
+			
+			NSObject *pv = (NSObject *)[_mapView viewForAnnotation:polyline];
+			if ([pv isKindOfClass:[NVPolylineAnnotationView class]]) {
+				NVPolylineAnnotationView *polylineView = 
+					(NVPolylineAnnotationView *)[_mapView viewForAnnotation:polyline];
+				
+				[polylineView regionChanged];
+			}
+		}		
+	}
+}
+
 - (void)dealloc {
     [super dealloc];
+}
+
+# pragma mark - MKMapViewDelegate
+
+- (void) mapView:(MKMapView *)mapView didAddAnnotationViews:(NSArray *)views {
+	// fixes that some marker are behind the polyline
+	for (int i=0; i<[views count]; i++) {
+		MKAnnotationView *view = [views objectAtIndex:i];
+		if ([view isKindOfClass:[NVPolylineAnnotationView class]]) {
+			[[view superview] sendSubviewToBack:view];
+			
+			/* In iOS version above 4.0 we need to update the polyline view after it
+			 has been added to the mapview and it ready to be displayed. */
+			NSString *reqSysVer = @"4.0";
+			NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+			if ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending) {
+				[self updatePolylineAnnotationView];
+			}
+		}
+	}
+}
+
+- (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
+	/* In iOS version above 4.0 we need to update the polyline view after a region change */
+	NSString *reqSysVer = @"4.0";
+	NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+	if ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending) {
+		[self updatePolylineAnnotationView];
+	}
 }
 
 @end
